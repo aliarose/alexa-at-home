@@ -105,7 +105,7 @@ function handleDiscovery(accessToken, context) {
  */
 function handleControl(event, context) {
 
-    if (event.header.namespace === 'Control' && event.header.name === 'SwitchOnOffRequest') {
+    if (event.header.name === 'SwitchOnOffRequest') {
 
         /**
          * Retrieve the appliance id and accessToken from the incoming message.
