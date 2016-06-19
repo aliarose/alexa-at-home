@@ -1,6 +1,6 @@
 /**
  * This sample demonstrates a simple driver  built against the Alexa Lighting Api.
- * For additional details, please refer to the Alexa Lighting API developer documentation 
+ * For additional details, please refer to the Alexa Lighting API developer documentation
  * https://developer.amazon.com/public/binaries/content/assets/html/alexa-lighting-api.html
  */
 var https = require('https');
@@ -15,7 +15,7 @@ exports.handler = function(event, context) {
     log('Input', event);
 
     switch (event.header.namespace) {
-        
+
         /**
          * The namespace of "Discovery" indicates a request is being made to the lambda for
          * discovering all appliances associated with the customer's appliance cloud account.
@@ -48,7 +48,7 @@ exports.handler = function(event, context) {
 /**
  * This method is invoked when we receive a "Discovery" message from Alexa Smart Home Skill.
  * We are expected to respond back with a list of appliances that we have discovered for a given
- * customer. 
+ * customer.
  */
 function handleDiscovery(accessToken, context) {
 
@@ -83,7 +83,7 @@ function handleDiscovery(accessToken, context) {
     appliances.push(applianceDiscovered);
 
     /**
-     * Craft the final response back to Alexa Smart Home Skill. This will include all the 
+     * Craft the final response back to Alexa Smart Home Skill. This will include all the
      * discoverd appliances.
      */
     var payloads = {
@@ -104,14 +104,6 @@ function handleDiscovery(accessToken, context) {
  * This is called when Alexa requests an action (IE turn off appliance).
  */
 function handleControl(event, context) {
-
-    /**
-     * Fail the invocation if the header is unexpected. This example only demonstrates
-     * turn on / turn off, hence we are filtering on anything that is not SwitchOnOffRequest.
-     */
-    if (event.header.namespace != 'Control' || event.header.name != 'SwitchOnOffRequest') {
-        context.fail(generateControlError('SwitchOnOffRequest', 'UNSUPPORTED_OPERATION', 'Unrecognized operation'));
-    }
 
     if (event.header.namespace === 'Control' && event.header.name === 'SwitchOnOffRequest') {
 
