@@ -104,85 +104,90 @@ function handleDiscovery(accessToken, context) {
  * This is called when Alexa requests an action (IE turn off appliance).
  */
 function handleControl(event, context) {
+  var eventConfirmation = event.header.name.replace("Request", "Confirmation");
 
-    if (event.header.name === 'SwitchOnOffRequest') {
+  log('done with result');
+  var headers = {
+      namespace: 'Alexa.ConnectedHome.Control',
+      name: eventConfirmation,
+      payloadVersion: '2'
+  };
+  var payloads = {
+      success: true
+  };
+  var result = {
+      header: headers,
+      payload: payloads
+  };
+  log('Done with result', result);
+  context.succeed(result);
+  // /**
+  //  * Retrieve the appliance id and accessToken from the incoming message.
+  //  */
+  // var applianceId = event.payload.appliance.applianceId;
+  // var accessToken = event.payload.accessToken.trim();
+  // log('applianceId', applianceId);
+  //
+  // /**
+  //  * Make a remote call to execute the action
+  //  */
+  // var options = {
+  //     hostname: REMOTE_CLOUD_HOSTNAME,
+  //     port: 443,
+  //     path: '/' + applianceId + '/' + event.header.name + '?access_token=' + accessToken,
+  //     headers: {
+  //         accept: '*/*'
+  //     }
+  // };
+  //
+  // var serverError = function (e) {
+  //     log('Error', e.message);
+  //     /**
+  //      * Craft an error response back to Alexa Smart Home Skill
+  //      */
+  //     context.fail(generateDependentServiceError());
+  // };
+  //
+  // var callback = function(response) {
+  //     var str = '';
+  //
+  //     response.on('data', function(chunk) {
+  //         str += chunk.toString('utf-8');
+  //     });
+  //
+  //     response.on('end', function() {
+  //         /**
+  //          * Test the response from remote endpoint (not shown) and craft a response message
+  //          * back to Alexa Smart Home Skill
+  //          */
+  //         var eventConfirmation = event.header.name.replace("Request", "Confirmation");
+  //
+  //         log('done with result');
+  //         var headers = {
+  //             namespace: 'Control',
+  //             name: eventConfirmation,
+  //             payloadVersion: '2'
+  //         };
+  //         var payloads = {
+  //             success: true
+  //         };
+  //         var result = {
+  //             header: headers,
+  //             payload: payloads
+  //         };
+  //         log('Done with result', result);
+  //         context.succeed(result);
+  //     });
+  //
+  //     response.on('error', serverError);
+  // };
+  //
+  // /**
+  //  * Make an HTTPS call to remote endpoint.
+  //  */
+  // https.get(options, callback)
+  //     .on('error', serverError).end();
 
-        /**
-         * Retrieve the appliance id and accessToken from the incoming message.
-         */
-        var applianceId = event.payload.appliance.applianceId;
-        var accessToken = event.payload.accessToken.trim();
-        log('applianceId', applianceId);
-
-        /**
-         * Make a remote call to execute the action based on accessToken and the applianceId and the switchControlAction
-         * Some other examples of checks:
-         *	validate the appliance is actually reachable else return TARGET_OFFLINE error
-         *	validate the authentication has not expired else return EXPIRED_ACCESS_TOKEN error
-         * Please see the technical documentation for detailed list of errors
-         */
-        var basePath = '';
-        if (event.payload.switchControlAction === 'TURN_ON') {
-            basePath = '/' + applianceId + '/on?access_token=' + accessToken;
-        } else if (event.payload.switchControlAction === 'TURN_OFF') {
-            basePath = '/' + applianceId + '/of?access_token=' + accessToken;
-        }
-
-        var options = {
-            hostname: REMOTE_CLOUD_HOSTNAME,
-            port: 443,
-            path: basePath,
-            headers: {
-                accept: '*/*'
-            }
-        };
-
-        var serverError = function (e) {
-            log('Error', e.message);
-            /**
-             * Craft an error response back to Alexa Smart Home Skill
-             */
-            context.fail(generateControlError('SwitchOnOffRequest', 'DEPENDENT_SERVICE_UNAVAILABLE', 'Unable to connect to server'));
-        };
-
-        var callback = function(response) {
-            var str = '';
-
-            response.on('data', function(chunk) {
-                str += chunk.toString('utf-8');
-            });
-
-            response.on('end', function() {
-                /**
-                 * Test the response from remote endpoint (not shown) and craft a response message
-                 * back to Alexa Smart Home Skill
-                 */
-                log('done with result');
-                var headers = {
-                    namespace: 'Control',
-                    name: 'SwitchOnOffResponse',
-                    payloadVersion: '1'
-                };
-                var payloads = {
-                    success: true
-                };
-                var result = {
-                    header: headers,
-                    payload: payloads
-                };
-                log('Done with result', result);
-                context.succeed(result);
-            });
-
-            response.on('error', serverError);
-        };
-
-        /**
-         * Make an HTTPS call to remote endpoint.
-         */
-        https.get(options, callback)
-            .on('error', serverError).end();
-    }
 }
 
 /**
@@ -194,18 +199,15 @@ function log(title, msg) {
     console.log('*************** ' + title + ' End*************');
 }
 
-function generateControlError(name, code, description) {
+function generateDependentServiceError() {
     var headers = {
-        namespace: 'Control',
-        name: name,
-        payloadVersion: '1'
+      namespace: 'Alexa.ConnectedHome.Control',
+      name: "DependentServiceUnavailableError",
+      payloadVersion: '2'
     };
 
     var payload = {
-        exception: {
-            code: code,
-            description: description
-        }
+      dependentServiceName: "Our Raspberry Pi"
     };
 
     var result = {
