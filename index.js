@@ -1,6 +1,9 @@
 'use strict';
 
+const LircNode = require('lirc_node');
 const FauxMo = require('fauxmojs');
+
+LircNode.init();
 
 let fauxMo = new FauxMo(
   {
@@ -9,7 +12,13 @@ let fauxMo = new FauxMo(
         name: 'screen',
         port: 11000,
         handler: (action) => {
-          console.log('projector screen action:', action);
+          if (action == "on"){
+            LircNode.irsend.send_once("screen", ["KEY_DOWN", "KEY_DOWN", "KEY_DOWN"]);
+          } else if (action == "off") {
+            LircNode.irsend.send_once("screen", ["KEY_UP", "KEY_UP", "KEY_UP"]);
+          } else {
+            console.log('Screen failed on unknown action:', action);
+          }
         }
       },
       {
@@ -29,4 +38,5 @@ let fauxMo = new FauxMo(
     ]
   });
 
-console.log('started..');
+console.log('started...');
+console.log(LircNode.remotes);

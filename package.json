@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/aliarose/alexa-at-home#readme",
   "dependencies": {
-    "fauxmojs": "^0.2.3"
+    "fauxmojs": "^0.2.3",
+    "lirc_node": "0.0.4"
   }
 }
