@@ -43,7 +43,11 @@ let fauxMo = new FauxMo(
         name: 'receiver',
         port: 11002,
         handler: (action) => {
-          console.log('receiver action:', action);
+          if (action == "on" || action == "off") {
+            LircNode.irsend.send_once("receiver", ["KEY_POWER", "KEY_POWER", "KEY_POWER"]);
+          } else {
+            console.log('Receiver failed on unknown action:', action);
+          }
         }
       }
     ]
