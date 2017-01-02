@@ -6,7 +6,7 @@ let fauxMo = new FauxMo(
   {
     devices: [
       {
-        name: 'projector screen',
+        name: 'screen',
         port: 11000,
         handler: (action) => {
           console.log('projector screen action:', action);
