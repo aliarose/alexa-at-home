@@ -39,4 +39,3 @@ let fauxMo = new FauxMo(
   });
 
 console.log('started...');
-console.log(LircNode.remotes);
