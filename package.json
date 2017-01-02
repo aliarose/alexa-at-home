@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/aliarose/alexa-at-home/issues"
   },
-  "homepage": "https://github.com/aliarose/alexa-at-home#readme"
+  "homepage": "https://github.com/aliarose/alexa-at-home#readme",
+  "dependencies": {
+    "fauxmojs": "^0.2.3"
+  }
 }
