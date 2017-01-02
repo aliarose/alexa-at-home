@@ -25,7 +25,18 @@ let fauxMo = new FauxMo(
         name: 'projector',
         port: 11001,
         handler: (action) => {
-          console.log('projector action:', action);
+          if (action == "on"){
+            LircNode.irsend.send_once("projector", ["KEY_POWER", "KEY_POWER"]);
+          } else if (action == "off") {
+            // Projector requires two consecutive suspend commands in order to shut off
+            LircNode.irsend.send_once("projector", ["KEY_SUSPEND", "KEY_SUSPEND"], () => {
+				setTimeout(() => {
+					LircNode.irsend.send_once("projector", ["KEY_SUSPEND", "KEY_SUSPEND"]);
+				}, 1000);
+			});
+          } else {
+            console.log('Projector failed on unknown action:', action);
+          }
         }
       },
       {
