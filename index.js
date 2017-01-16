@@ -7,25 +7,25 @@ LircNode.init();
 
 // Class Helper for on/off
 class Helper {
-  screenOn() {
-    LircNode.irsend.send_once("screen", ["KEY_DOWN", "KEY_DOWN", "KEY_DOWN"])
+  screenOn(callback) {
+    LircNode.irsend.send_once("screen", ["KEY_DOWN"], callback);
   }
-  screenOff() {
-    LircNode.irsend.send_once("screen", ["KEY_UP", "KEY_UP", "KEY_UP"])
+  screenOff(callback) {
+    LircNode.irsend.send_once("screen", ["KEY_UP"], callback);
   }
-  projectorOn() {
-    LircNode.irsend.send_once("projector", ["KEY_POWER", "KEY_POWER"]);
+  projectorOn(callback) {
+    LircNode.irsend.send_once("projector", ["KEY_POWER"], callback);
   }
-  projectorOff() {
+  projectorOff(callback) {
     // Projector requires two consecutive suspend commands in order to shut off
-    LircNode.irsend.send_once("projector", ["KEY_SUSPEND", "KEY_SUSPEND"], () => {
+    LircNode.irsend.send_once("projector", ["KEY_SUSPEND"], () => {
       setTimeout( () => {
-        LircNode.irsend.send_once("projector", ["KEY_SUSPEND", "KEY_SUSPEND"]);
+        LircNode.irsend.send_once("projector", ["KEY_SUSPEND"], callback);
       }, 1000);
     });
   }
-  receiverOnOff() {
-    LircNode.irsend.send_once("receiver", ["KEY_POWER", "KEY_POWER", "KEY_POWER"]);
+  receiverOnOff(callback) {
+    LircNode.irsend.send_once("receiver", ["KEY_POWER"], callback);
   }
 }
 
@@ -83,15 +83,21 @@ let fauxMo = new FauxMo(
           switch(action) {
             case "on":
               // Turn on screen, projector, and receiver
-              helper.screenOn();
-              helper.receiverOnOff();
-              helper.projectorOn();
+              helper.screenOn(() => {
+                helper.receiverOnOff(() => {
+                    helper.projectorOn();
+                });
+              });
               break;
             case "off":
               // Turn off screen, projector, and receiver
-              helper.screenOff();
-              helper.receiverOnOff();
-              helper.projectorOff();
+              helper.screenOff(() => {
+                helper.receiverOnOff(() => {
+                  setTimeout(() => {
+                    helper.projectorOff()
+                  }, 1000);
+                });
+              });
               break;
             default:
               console.log('Movie failed on unknown action:', action);
