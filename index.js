@@ -121,7 +121,7 @@ let fauxMo = new FauxMo(
         }
       },
       {
-        name: 'amnesiac',
+        name: 'amnejhiac',
         port: 11004,
         handler: (action) => {
           switch(action) {
