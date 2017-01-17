@@ -2,6 +2,7 @@
 
 const LircNode = require('lirc_node');
 const FauxMo = require('fauxmojs');
+const exec = require('child_process').exec;
 
 LircNode.init();
 
@@ -26,6 +27,21 @@ class Helper {
   }
   receiverOnOff(callback) {
     LircNode.irsend.send_once("receiver", ["KEY_POWER"], callback);
+  }
+  amnesiacWake(callback) {
+    exec("wakeonlan  00:25:90:00:e9:7e", callback);
+  }
+  amnesiacSuspend(callback) {
+    /*
+      pi@amnesiac is configured with authorized_keys:
+        command="/home/pi/bin/suspend.sh",no-port-forwarding,no-x11-forwarding,no-agent-forwarding <public_key>
+      and suspend.sh:
+        echo "Suspending..."
+        sudo systemctl suspend
+      and sudoers:
+        pi ALL= NOPASSWD: /usr/bin/systemctl suspend
+    */
+    exec("ssh -i ~/.ssh/id_rsa_sol pi@amnesiac.local", callback);
   }
 }
 
@@ -101,6 +117,22 @@ let fauxMo = new FauxMo(
               break;
             default:
               console.log('Movie failed on unknown action:', action);
+          }
+        }
+      },
+      {
+        name: 'amnesiac',
+        port: 11004,
+        handler: (action) => {
+          switch(action) {
+            case 'on':
+              helper.amnesiacWake();
+              break;
+            case 'off':
+              helper.amnesiacSuspend();
+              break;
+            default:
+              console.log('amnesiac failed on unknown action: ', action);
           }
         }
       }
