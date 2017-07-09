@@ -1,51 +1,17 @@
 'use strict';
 
-const LircNode = require('lirc_node');
 const FauxMo = require('fauxmojs');
-const exec = require('child_process').exec;
+const Lirc = require('./lib/lirc');
+const Cec = require('./lib/cec');
+const Wol = require('./lib/wol');
 
-LircNode.init();
 
-// Class Helper for on/off
-class Helper {
-  screenOn(callback) {
-    LircNode.irsend.send_once("screen", ["KEY_DOWN"], callback);
-  }
-  screenOff(callback) {
-    LircNode.irsend.send_once("screen", ["KEY_UP"], callback);
-  }
-  projectorOn(callback) {
-    LircNode.irsend.send_once("projector", ["KEY_POWER"], callback);
-  }
-  projectorOff(callback) {
-    // Projector requires two consecutive suspend commands in order to shut off
-    LircNode.irsend.send_once("projector", ["KEY_SUSPEND"], () => {
-      setTimeout( () => {
-        LircNode.irsend.send_once("projector", ["KEY_SUSPEND"], callback);
-      }, 1000);
-    });
-  }
-  receiverOnOff(callback) {
-    LircNode.irsend.send_once("receiver", ["KEY_POWER"], callback);
-  }
-  amnesiacWake(callback) {
-    exec("wakeonlan  00:25:90:00:e9:7e", callback);
-  }
-  amnesiacSuspend(callback) {
-    /*
-      pi@amnesiac is configured with authorized_keys:
-        command="/home/pi/bin/suspend.sh",no-port-forwarding,no-x11-forwarding,no-agent-forwarding <public_key>
-      and suspend.sh:
-        echo "Suspending..."
-        sudo systemctl suspend
-      and sudoers:
-        pi ALL= NOPASSWD: /usr/bin/systemctl suspend
-    */
-    exec("ssh -i ~/.ssh/id_rsa_sol pi@amnesiac.local", callback);
-  }
-}
+const lirc = new Lirc();
+const cec = new Cec();
+const wol = new Wol();
 
-let helper = new Helper();
+cec.start();
+
 let fauxMo = new FauxMo(
   {
     devices: [
@@ -55,10 +21,10 @@ let fauxMo = new FauxMo(
         handler: (action) => {
           switch(action) {
             case "on":
-              helper.screenOn();
+              lirc.screenOn();
               break;
             case "off":
-              helper.screenOff();
+              lirc.screenOff();
               break;
             default:
               console.log('Screen failed on unknown action:', action);
@@ -71,10 +37,10 @@ let fauxMo = new FauxMo(
         handler: (action) => {
           switch(action) {
             case "on":
-              helper.projectorOn();
+              lirc.projectorOn();
               break;
             case "off":
-              helper.projectorOff();
+              lirc.projectorOff();
               break;
             default:
               console.log('Projector failed on unknown action:', action);
@@ -85,10 +51,15 @@ let fauxMo = new FauxMo(
         name: 'receiver',
         port: 11002,
         handler: (action) => {
-          if (action == "on" || action == "off") {
-            helper.receiverOnOff();
-          } else {
-            console.log('Receiver failed on unknown action:', action);
+          switch (action) {
+            case "on":
+              cec.receiverOn();
+              break;
+            case "off":
+              cec.receiverOff();
+              break;
+            default:
+              console.log('Receiver failed on unknown action:', action);
           }
         }
       },
@@ -96,28 +67,23 @@ let fauxMo = new FauxMo(
         name: 'movie',
         port: 11003,
         handler: (action) => {
-          switch(action) {
-            case "on":
-              // Turn on screen, projector, and receiver
-              helper.screenOn(() => {
-                helper.receiverOnOff(() => {
-                    helper.projectorOn();
-                });
-              });
-              break;
-            case "off":
-              // Turn off screen, projector, and receiver
-              helper.screenOff(() => {
-                helper.receiverOnOff(() => {
-                  setTimeout(() => {
-                    helper.projectorOff()
-                  }, 1000);
-                });
-              });
-              break;
-            default:
-              console.log('Movie failed on unknown action:', action);
-          }
+          (async () => {
+            switch(action) {
+              case "on":
+                await lirc.screenOn();
+                await cec.activatePulse();
+                // TODO: movie audio
+                await lirc.projectorOn();
+                break;
+              case "off":
+                await lirc.screenOff();
+                await cec.powerOff();
+                await lirc.projectorOff();
+                break;
+              default:
+                console.log('Movie failed on unknown action:', action);
+            }
+          })();
         }
       },
       {
@@ -126,10 +92,10 @@ let fauxMo = new FauxMo(
         handler: (action) => {
           switch(action) {
             case 'on':
-              helper.amnesiacWake();
+              wol.amnesiacWake();
               break;
             case 'off':
-              helper.amnesiacSuspend();
+              wol.amnesiacSuspend();
               break;
             default:
               console.log('amnesiac failed on unknown action: ', action);
