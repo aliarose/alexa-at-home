@@ -1,16 +1,17 @@
 'use strict';
 
 const FauxMo = require('fauxmojs');
-const Lirc = require('lib/lirc');
-const Cec = require('lib/cec');
-const Wol = require('lib/wol');
+const Lirc = require('./lib/lirc');
+const Cec = require('./lib/cec');
+const Wol = require('./lib/wol');
 
 
 const lirc = new Lirc();
 const cec = new Cec();
 const wol = new Wol();
 
-let helper = new Helper();
+cec.start();
+
 let fauxMo = new FauxMo(
   {
     devices: [
